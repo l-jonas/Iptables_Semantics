@@ -102,7 +102,15 @@ loadUnfoldedRuleset debug table chain res = do
     checkParsedTables res
     putStrLn $ "== Transformed to Isabelle type (only " ++ table ++ " table) =="
     let (fw, defaultPolicies) = case rulesetLookup table res of
-                    Right rules -> rules
+                    Right (rules, defaultActions) ->
+                        let
+                            rules' = flip map rules
+                                (\(n, c) ->
+                                    if n == chain then (n, blackholeRule:c)
+                                    else (n, c)
+                                )
+                        in
+                        (rules', defaultActions)
                     Left err -> error err
     let policy = case M.lookup chain defaultPolicies of
                     Just policy -> policy
@@ -121,6 +129,8 @@ loadUnfoldedRuleset debug table chain res = do
                     putStrLn $ "== unfolded " ++ chain ++ " chain =="
                     putStrLn $ L.intercalate "\n" $ map show unfolded
     return $ unfolded
+
+blackholeRule = Isabelle.Rule (Isabelle.Match $ Isabelle.OIface $ Isabelle.Iface "!blackhole") Isabelle.Reject
 
 -- transforming to Isabelle type
 

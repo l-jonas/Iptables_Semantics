@@ -29,11 +29,12 @@ parseRTbl_ipv6 = parseRTbl ipv6colonsep
 
 parseRTblEntry :: Isabelle.Len a => Parsec String s (Isabelle.Word a) -> Parsec String s (Routing_rule a)
 parseRTblEntry ippars = do
+    blackhole <- parseBlackhole <|> return id
     pfx <- ipaddrOrCidr ippars <|> defaultParser
     skipWS
     opts <- parseOpts ippars
     many1 (char '\n')
-    return $ opts . empty_rr_hlp $ pfx
+    return $ blackhole . opts . empty_rr_hlp $ pfx
     where
         defaultParser = Prelude.const (Isabelle.default_prefix) <$> lit "default"
 
@@ -44,6 +45,12 @@ parseOpts :: Isabelle.Len a => Parsec String s (Isabelle.Word a) -> Parsec Strin
 parseOpts ippars = flip (foldl (flip id)) <$> many (parseOpt ippars <* skipWS)
 
 litornat l =  (void $ nat) <|> void (choice (map lit l))
+
+parseBlackhole :: Isabelle.Len a => Parsec String s (Routing_rule a -> Routing_rule a)
+parseBlackhole = do
+    lit "blackhole"
+    skipWS
+    return $ routing_action_oiface_update "!blackhole"
 
 ignoreScope = do
     lit "scope"

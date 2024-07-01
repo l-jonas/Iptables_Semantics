@@ -105,6 +105,7 @@ readArgs ops (CommandLineArgs labeled unlabeled) = do
                         Nothing -> do
                             putErrStrLn "WARNING: no IP assignment specified, loading a generic file"
                             return $ genericAssmt ops
+            let assmt' = (Isabelle.Iface "!blackhole", []):assmt
             rtbl <- case routingtblFilePath of
                         Just path -> Just `liftM` readRTbl ops path
                         Nothing -> return Nothing
@@ -121,7 +122,7 @@ readArgs ops (CommandLineArgs labeled unlabeled) = do
                                                              then return ps
                                                              else error ("Invalid dst ports " ++ (show (filter (not . sanityCheckPort) ps)))
             let smOptions = map (\d -> (smSrcPort, d)) smDstPorts
-            return (verbose, assmt, rtbl, tbl, chn, smOptions)
+            return (verbose, assmt', rtbl, tbl, chn, smOptions)
                 where sanityCheckPort p = (p >= 0 && p < 65536)
 
 
